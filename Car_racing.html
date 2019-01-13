@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Car Racing</title>
+	<meta charset="utf-8">
+</head>
+<body onload="work()">
+<script>
+	var driven,
+		enemies = [];
+function work(){
+		driven = new Component(200,520,100,100,'image','car.jpg');
+		enemy = new Component(200,0,100,100,'image','enemy1.jpg');
+		gameArea.start();
+	}
+
+	var gameArea = {
+		canvas: document.createElement('canvas'),
+		start: function(){
+			this.canvas.width = 500;
+			this.canvas.height = 630;
+			this.canvas.style.background = 'transparent';
+			this.canvas.style.border = 'solid 2px #555';
+			this.context = this.canvas.getContext('2d');
+			document.body.insertBefore(this.canvas,document.body.childNodes[0]);
+			//this.frameNo = 0;
+			this.interval = setInterval(updateOthers,20);
+			window.addEventListener('keydown', function(e){
+				e.preventDefault();
+				gameArea.keys = (gameArea.keys || []);
+				gameArea.keys[e.keyCode] = true;
+			})
+			window.addEventListener('keyup', function(e){
+				e.preventDefault();
+				gameArea.keys[e.keyCode] = false;
+			})
+		},
+		clean: function(){
+			this.context.clearRect(0,0,this.canvas.width,this.canvas.height);
+		},
+		stop: function(){
+			clearInterval(this.interval);
+		}
+	}
+
+	var Component = function (x,y,width,height,type,source){
+		this.type = type;
+		this.x = x;
+		this.y = y;
+		this.speedX = 0;
+		this.speedY = 0;
+		this.width = width;
+		this.height = height;
+		this.getImage = function(){
+			ctx = gameArea.context;
+			if(this.type == 'image'){
+				this.image = new Image();
+				this.image.src = source;
+				ctx.drawImage(this.image,this.x,this.y,this.width,this.height)
+			}
+			
+		}
+		this.changePos = function(){
+			this.x += this.speedX;
+			this.y += this.speedY;
+		}
+		this.crash = function(anotherObj){
+			let drivenLeft = this.x;
+			let drivenRight = this.x + this.width;
+			let drivenTop = this.y;
+			let drivenBottom = this.y + this.height;
+			let otherLeft = anotherObj.x
+			let otherRight = anotherObj.x + anotherObj.width;
+			let otherTop = anotherObj.y; 
+			let otherBottom = anotherObj.y + anotherObj.height;
+			let crash = true;
+			if((drivenBottom < otherTop) ||(drivenTop > otherBottom) || (drivenRight < otherLeft) || (drivenLeft > otherRight)){
+				crash = false
+			}
+			return crash;
+		}
+	}
+
+	function updateOthers(){
+		if(driven.crash(enemy)){
+			gameArea.stop();
+			alert("GAME OVER!")
+		}
+		else{
+			gameArea.clean();
+			enemy.y += 1;
+			driven.speedX = 0;
+			driven.speedY = 0;
+			if(gameArea.keys && gameArea.keys[37]) driven.speedX = -2;
+			if(gameArea.keys && gameArea.keys[39]) driven.speedX = 2;
+			if(gameArea.keys && gameArea.keys[38]) driven.speedY = -2;
+			if(gameArea.keys && gameArea.keys[40]) driven.speedY = 2;
+			driven.changePos();
+			driven.getImage();
+			enemy.getImage();
+		}
+	}
+</script>
+</body>
+</html>
