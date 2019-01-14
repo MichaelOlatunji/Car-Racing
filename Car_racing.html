@@ -7,7 +7,9 @@
 <body onload="work()">
 <script>
 	var driven,
-		enemies = [];
+		imageArr = ['enemy1.jpg','enemy2.png','enemy3.jpg','enemy4.jpg','enemy5.jpg','enemy6.jpg','enemy7.jpg'],
+		enemies = [],
+		 enemiesMove;
 function work(){
 		driven = new Component(200,520,100,100,'image','car.jpg');
 		enemy = new Component(200,0,100,100,'image','enemy1.jpg');
@@ -23,7 +25,7 @@ function work(){
 			this.canvas.style.border = 'solid 2px #555';
 			this.context = this.canvas.getContext('2d');
 			document.body.insertBefore(this.canvas,document.body.childNodes[0]);
-			//this.frameNo = 0;
+			this.frameNo = 0;
 			this.interval = setInterval(updateOthers,20);
 			window.addEventListener('keydown', function(e){
 				e.preventDefault();
@@ -79,26 +81,65 @@ function work(){
 			}
 			return crash;
 		}
+		this.score = function(text){
+			ctx = gameArea.context;
+			ctx.font = '20px Arial';
+			ctx.fillText(text, 10, 30);
+			ctx.fillStyle = '#3bcdde';
+		}
 	}
 
 	function updateOthers(){
-		if(driven.crash(enemy)){
-			gameArea.stop();
-			alert("GAME OVER!")
+		var rand
+		gameArea.frameNo += 1;
+		gameArea.clean();
+		lane();
+		if(gameArea.frameNo == 1 || gameArea.frameNo % 250 == 0){
+			randPosX = Math.floor(Math.random()*400)
+			rand = Math.floor(Math.random()*7);
+			enemies.push(new Component(randPosX,-100,100,100,'image',imageArr[rand]));
+			console.log(enemies,enemies.length);
+		
+		// if(driven.crash(enemies[rand])){
+		// gameArea.stop();
+		// alert("GAME OVER!")
+		// }
+		//enemy.y += 1;
+	}
+		for(var i = 0; i < enemies.length; i++){
+			enemies[i].y += 1;
+			enemies[i].getImage();
+			if(driven.crash(enemies[i])){
+		gameArea.stop();
+		alert("GAME OVER!")
 		}
-		else{
-			gameArea.clean();
-			enemy.y += 1;
-			driven.speedX = 0;
-			driven.speedY = 0;
-			if(gameArea.keys && gameArea.keys[37]) driven.speedX = -2;
-			if(gameArea.keys && gameArea.keys[39]) driven.speedX = 2;
-			if(gameArea.keys && gameArea.keys[38]) driven.speedY = -2;
-			if(gameArea.keys && gameArea.keys[40]) driven.speedY = 2;
-			driven.changePos();
-			driven.getImage();
-			enemy.getImage();
-		}
+		enemies[i].score(enemies.length * 10);
+		}	
+		//console.log(enemies[i].y);
+		driven.speedX = 0;
+		driven.speedY = 0;
+		if(gameArea.keys && gameArea.keys[37]) driven.speedX = -3;
+		if(gameArea.keys && gameArea.keys[39]) driven.speedX = 3;
+		if(gameArea.keys && gameArea.keys[38]) driven.speedY = -3;
+		if(gameArea.keys && gameArea.keys[40]) driven.speedY = 3;
+		// enemiesMove.getImage();
+		// enemiesMove.changePos();
+		driven.changePos();
+		driven.getImage();
+		//enemy.getImage();
+	}
+
+	function everyinterval(n){
+		if((gameArea.frameNo / n ) % 1 == 0){return true;}
+		return false;
+	}
+	function lane(){
+		ctx = gameArea.context;
+		ctx.fillStyle = '#000';
+		ctx.fillRect(50,0,400,gameArea.canvas.height);
+		ctx.fillStyle = '#17A05D';
+		ctx.fillRect(0,0,50,gameArea.canvas.height);
+		ctx.fillRect(450,0,50,gameArea.canvas.height);
 	}
 </script>
 </body>
