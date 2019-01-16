@@ -9,17 +9,18 @@
 	var driven,
 		imageArr = ['enemy1.jpg','enemy2.png','enemy3.jpg','enemy4.jpg','enemy5.jpg','enemy6.jpg','enemy7.jpg'],
 		enemies = [],
+		lanes = [],
 		 enemiesMove;
 function work(){
-		driven = new Component(200,520,100,100,'image','car.jpg');
-		enemy = new Component(200,0,100,100,'image','enemy1.jpg');
+		driven = new Component(200,520,100,100,'image',0,'car.jpg');
+		//enemy = new Component(200,0,100,100,'image','enemy1.jpg');
 		gameArea.start();
 	}
 
 	var gameArea = {
 		canvas: document.createElement('canvas'),
 		start: function(){
-			this.canvas.width = 500;
+			this.canvas.width = 600;
 			this.canvas.height = 630;
 			this.canvas.style.background = 'transparent';
 			this.canvas.style.border = 'solid 2px #555';
@@ -45,14 +46,18 @@ function work(){
 		}
 	}
 
-	var Component = function (x,y,width,height,type,source){
+	var Component = function (x,y,width,height,type,speed,source){
 		this.type = type;
 		this.x = x;
 		this.y = y;
+		this.speed = speed;
+		console.log(this.y,this.speed);
 		this.speedX = 0;
 		this.speedY = 0;
 		this.width = width;
 		this.height = height;
+		this.gravity = 0;
+		this.gravitySpeed = 0;
 		this.getImage = function(){
 			ctx = gameArea.context;
 			if(this.type == 'image'){
@@ -62,9 +67,38 @@ function work(){
 			}
 			
 		}
+		this.carSpeed = function(){
+			this.y += this.speed;
+		}
 		this.changePos = function(){
+			this.gravitySpeed += this.gravity;
 			this.x += this.speedX;
-			this.y += this.speedY;
+			this.y += this.speedY + this.gravitySpeed;
+			this.hitbottom();
+		}
+		this.hitbottom = function(){
+			let top = gameArea.canvas.height - 630;
+			let bottom = gameArea.canvas.height - this.height;
+			let rightSide = gameArea.canvas.width - this.width - 50;
+			let leftSide = gameArea.canvas.width - 550;
+			if(this.y < top){
+				this.y = top;
+			}
+			if(this.y > bottom){
+				this.y = bottom;
+				this.gravitySpeed = 0;
+			}
+			if(this.x > rightSide){
+				this.x = rightSide;
+			}
+			if(this.x < leftSide){
+				this.x = leftSide;
+			}
+		}
+		this.createRect = function (){
+			let ctx = gameArea.context;
+			ctx.fillStyle = '#fff';
+			ctx.fillRect(this.x, this.y, this.width,this.height);
 		}
 		this.crash = function(anotherObj){
 			let drivenLeft = this.x;
@@ -83,45 +117,53 @@ function work(){
 		}
 		this.score = function(text){
 			ctx = gameArea.context;
-			ctx.font = '20px Arial';
+			ctx.font = '20px lcd';
 			ctx.fillText(text, 10, 30);
-			ctx.fillStyle = '#3bcdde';
+			ctx.fillStyle = '#fff';
 		}
 	}
 
 	function updateOthers(){
-		var rand
+		var rand, max, min, randEnemyAttack, rect, randSpeed;
 		gameArea.frameNo += 1;
 		gameArea.clean();
 		lane();
-		if(gameArea.frameNo == 1 || gameArea.frameNo % 250 == 0){
-			randPosX = Math.floor(Math.random()*400)
+		if(gameArea.frameNo % 30 == 0){
+		rect = new Component(gameArea.canvas.width/2 - 10,-50,20,50);
+		lanes.push(rect);
+	}
+	for(var i = 0;i < lanes.length; i++){
+			lanes[i].createRect();
+			lanes[i].y += 3; 
+		}
+		max = 450;
+		min = 50;
+		//randEnemyAttack = Math.floor(Math.random() *2000);
+		if(gameArea.frameNo == 1 || gameArea.frameNo % 120 == 0){
+			randSpeed = Math.floor(Math.random()*4)+ 2;
+			randPosX = Math.floor(Math.random()*(max-min+1)) + min
 			rand = Math.floor(Math.random()*7);
-			enemies.push(new Component(randPosX,-100,100,100,'image',imageArr[rand]));
+			enemies.push(new Component(randPosX,-100,100,100,'image',randSpeed,imageArr[rand]));
 			console.log(enemies,enemies.length);
-		
-		// if(driven.crash(enemies[rand])){
-		// gameArea.stop();
-		// alert("GAME OVER!")
-		// }
+		//console.log(randEnemyAttack);
 		//enemy.y += 1;
 	}
 		for(var i = 0; i < enemies.length; i++){
-			enemies[i].y += 1;
+			enemies[i].carSpeed();
+			//enemies[i].y += 2;
 			enemies[i].getImage();
 			if(driven.crash(enemies[i])){
 		gameArea.stop();
 		alert("GAME OVER!")
 		}
-		enemies[i].score(enemies.length * 10);
+		enemies[i].score('Score: ' +enemies.length * 10);
 		}	
-		//console.log(enemies[i].y);
 		driven.speedX = 0;
 		driven.speedY = 0;
-		if(gameArea.keys && gameArea.keys[37]) driven.speedX = -3;
-		if(gameArea.keys && gameArea.keys[39]) driven.speedX = 3;
-		if(gameArea.keys && gameArea.keys[38]) driven.speedY = -3;
-		if(gameArea.keys && gameArea.keys[40]) driven.speedY = 3;
+		if(gameArea.keys && gameArea.keys[37]) driven.speedX = -4;
+		if(gameArea.keys && gameArea.keys[39]) driven.speedX = 4;
+		if(gameArea.keys && gameArea.keys[38]) driven.speedY = -4;
+		if(gameArea.keys && gameArea.keys[40]) driven.speedY = 4;
 		// enemiesMove.getImage();
 		// enemiesMove.changePos();
 		driven.changePos();
@@ -135,11 +177,17 @@ function work(){
 	}
 	function lane(){
 		ctx = gameArea.context;
-		ctx.fillStyle = '#000';
-		ctx.fillRect(50,0,400,gameArea.canvas.height);
+		ctx.fillStyle = '#222';
+		ctx.fillRect(50,0,500,gameArea.canvas.height );
 		ctx.fillStyle = '#17A05D';
 		ctx.fillRect(0,0,50,gameArea.canvas.height);
-		ctx.fillRect(450,0,50,gameArea.canvas.height);
+		ctx.fillRect(550,0,50,gameArea.canvas.height);
+		// for(var i = 0; i < 8; i++){
+		// 	ctx.fillStyle = '#fff';
+		// 	ctx.fillRect(gameArea.canvas.width/2 - 10,80*i,20,50);
+		// }
+
+
 	}
 </script>
 </body>
