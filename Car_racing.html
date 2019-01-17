@@ -7,20 +7,25 @@
 <body onload="work()">
 <script>
 	var driven,
-		imageArr = ['enemy1.jpg','enemy2.png','enemy3.jpg','enemy4.jpg','enemy5.jpg','enemy6.jpg','enemy7.jpg'],
+		imageArr = ['images/enemy1.png','images/enemy2.png','images/enemy3.png','images/enemy4.png','images/enemy5.png','images/enemy6.png','images/enemy7.png'],
+		imageArrOpp = ['images/enemy1_inverse.png','images/enemy2_inverse.png','images/enemy3_inverse.png','images/enemy4_inverse.png','images/enemy5_inverse.png','images/enemy6_inverse.png','images/enemy7_inverse.png'],
 		enemies = [],
+		enemiesOpp = [],
 		lanes = [],
 		 enemiesMove;
 function work(){
-		driven = new Component(200,520,100,100,'image',0,'car.jpg');
+		driven = new Component(200,520,60,100,'image',0,'images/car.png');
 		//enemy = new Component(200,0,100,100,'image','enemy1.jpg');
 		gameArea.start();
+		// if(gameArea.keys && gameArea.keys[13]){
+		// 	gameArea.start();
+		// }
 	}
 
 	var gameArea = {
 		canvas: document.createElement('canvas'),
 		start: function(){
-			this.canvas.width = 600;
+			this.canvas.width = 500;
 			this.canvas.height = 630;
 			this.canvas.style.background = 'transparent';
 			this.canvas.style.border = 'solid 2px #555';
@@ -43,6 +48,15 @@ function work(){
 		},
 		stop: function(){
 			clearInterval(this.interval);
+			window.addEventListener('keydown', function(e){
+				e.preventDefault();
+				gameArea.keys = (gameArea.keys || []);
+				gameArea.keys[e.keyCode] = true;
+			})
+			window.addEventListener('keyup', function(e){
+				e.preventDefault();
+				gameArea.keys[e.keyCode] = false;
+			})
 		}
 	}
 
@@ -80,7 +94,7 @@ function work(){
 			let top = gameArea.canvas.height - 630;
 			let bottom = gameArea.canvas.height - this.height;
 			let rightSide = gameArea.canvas.width - this.width - 50;
-			let leftSide = gameArea.canvas.width - 550;
+			let leftSide = gameArea.canvas.width - 450;
 			if(this.y < top){
 				this.y = top;
 			}
@@ -110,42 +124,41 @@ function work(){
 			let otherTop = anotherObj.y; 
 			let otherBottom = anotherObj.y + anotherObj.height;
 			let crash = true;
-			if((drivenBottom < otherTop) ||(drivenTop > otherBottom) || (drivenRight < otherLeft) || (drivenLeft > otherRight)){
+			if((drivenBottom < otherTop + 5) ||(drivenTop > otherBottom -5) || (drivenRight < otherLeft + 5) || (drivenLeft > otherRight - 5)){
 				crash = false
 			}
 			return crash;
 		}
-		this.score = function(text){
+		this.score = function(text, pos){
 			ctx = gameArea.context;
 			ctx.font = '20px lcd';
-			ctx.fillText(text, 10, 30);
+			ctx.fillText(text, 10, pos);
 			ctx.fillStyle = '#fff';
 		}
 	}
 
 	function updateOthers(){
-		var rand, max, min, randEnemyAttack, rect, randSpeed;
+		var rand, max, min, randEnemyAttack, rect, randSpeed, paused = false;
 		gameArea.frameNo += 1;
 		gameArea.clean();
 		lane();
-		if(gameArea.frameNo % 30 == 0){
-		rect = new Component(gameArea.canvas.width/2 - 10,-50,20,50);
+		if(gameArea.frameNo % 20 == 0){
+		rect = new Component(gameArea.canvas.width/2 - 10,-50,15,50);
 		lanes.push(rect);
 	}
 	for(var i = 0;i < lanes.length; i++){
 			lanes[i].createRect();
-			lanes[i].y += 3; 
+			lanes[i].y += 4; 
 		}
-		max = 450;
-		min = 50;
-		//randEnemyAttack = Math.floor(Math.random() *2000);
-		if(gameArea.frameNo == 1 || gameArea.frameNo % 120 == 0){
-			randSpeed = Math.floor(Math.random()*4)+ 2;
+
+		if(gameArea.frameNo == 1 || gameArea.frameNo % 100 == 0){
+			max = 195;
+			min = 50;
+			randSpeed = Math.floor(Math.random()*4)+ 5;
 			randPosX = Math.floor(Math.random()*(max-min+1)) + min
 			rand = Math.floor(Math.random()*7);
-			enemies.push(new Component(randPosX,-100,100,100,'image',randSpeed,imageArr[rand]));
+			enemies.push(new Component(randPosX,-100,60,100,'image',randSpeed,imageArr[rand]));
 			console.log(enemies,enemies.length);
-		//console.log(randEnemyAttack);
 		//enemy.y += 1;
 	}
 		for(var i = 0; i < enemies.length; i++){
@@ -156,7 +169,32 @@ function work(){
 		gameArea.stop();
 		alert("GAME OVER!")
 		}
-		enemies[i].score('Score: ' +enemies.length * 10);
+		enemies[i].score('Score: ' +(enemies.length * 10 ),30);
+		enemies[i].score('Stage 1', 60);
+		}
+
+
+  // Enemies on the same track
+
+
+		if(gameArea.frameNo == 1 || gameArea.frameNo % 150 == 0){
+			var maxOpp = 390,
+				minOpp = 260;
+			randSpeed = Math.floor(Math.random()*4);
+			randPosX = Math.floor(Math.random()*(maxOpp-minOpp+1)) + minOpp
+			rand = Math.floor(Math.random()*7);
+			enemiesOpp.push(new Component(randPosX,-100,60,100,'image',randSpeed,imageArrOpp[rand]));
+			console.log(enemiesOpp,enemiesOpp.length);
+	}
+		for(var i = 0; i < enemiesOpp.length; i++){
+			enemiesOpp[i].carSpeed();
+			enemiesOpp[i].getImage();
+			if(driven.crash(enemiesOpp[i])){
+		gameArea.stop();
+		alert("GAME OVER!")
+		}
+		// enemies[i].score('Score: ' +(enemies.length * 10 ),30);
+		// enemies[i].score('Stage 1', 60);
 		}	
 		driven.speedX = 0;
 		driven.speedY = 0;
@@ -164,11 +202,23 @@ function work(){
 		if(gameArea.keys && gameArea.keys[39]) driven.speedX = 4;
 		if(gameArea.keys && gameArea.keys[38]) driven.speedY = -4;
 		if(gameArea.keys && gameArea.keys[40]) driven.speedY = 4;
-		// enemiesMove.getImage();
-		// enemiesMove.changePos();
+		// function playpause(){
+		// 	if(gameArea.keys && gameArea.keys[32]){
+		// 	gameArea.stop();
+		// 	paused = true;
+		// }
+		// 	if(gameArea.keys && gameArea.keys[13] && paused){
+		// 		alert(paused);
+		// 		gameArea.start();
+		// 	}
+		// }
+		// playpause();
 		driven.changePos();
 		driven.getImage();
 		//enemy.getImage();
+		// if(enemies.length * 10 == 50){
+		// 	alert('Stage 1 completed');
+		// }
 	}
 
 	function everyinterval(n){
@@ -181,13 +231,7 @@ function work(){
 		ctx.fillRect(50,0,500,gameArea.canvas.height );
 		ctx.fillStyle = '#17A05D';
 		ctx.fillRect(0,0,50,gameArea.canvas.height);
-		ctx.fillRect(550,0,50,gameArea.canvas.height);
-		// for(var i = 0; i < 8; i++){
-		// 	ctx.fillStyle = '#fff';
-		// 	ctx.fillRect(gameArea.canvas.width/2 - 10,80*i,20,50);
-		// }
-
-
+		ctx.fillRect(450,0,50,gameArea.canvas.height);
 	}
 </script>
 </body>
