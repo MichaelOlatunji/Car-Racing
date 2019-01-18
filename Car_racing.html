@@ -5,6 +5,7 @@
 	<meta charset="utf-8">
 </head>
 <body onload="work()">
+	
 <script>
 	var driven,
 		imageArr = ['images/enemy1.png','images/enemy2.png','images/enemy3.png','images/enemy4.png','images/enemy5.png','images/enemy6.png','images/enemy7.png'],
@@ -12,7 +13,10 @@
 		enemies = [],
 		enemiesOpp = [],
 		lanes = [],
-		 enemiesMove;
+		playerName,
+		life = 3,
+		scores = 0,
+		scoresOpp = 0;
 function work(){
 		driven = new Component(200,520,60,100,'image',0,'images/car.png');
 		//enemy = new Component(200,0,100,100,'image','enemy1.jpg');
@@ -60,8 +64,8 @@ function work(){
 		}
 	}
 
-	var Component = function (x,y,width,height,type,speed,source){
-		this.type = type;
+	var Component = function (x,y,width,height,types,speed,source){
+		this.types = types;
 		this.x = x;
 		this.y = y;
 		this.speed = speed;
@@ -74,7 +78,7 @@ function work(){
 		this.gravitySpeed = 0;
 		this.getImage = function(){
 			ctx = gameArea.context;
-			if(this.type == 'image'){
+			if(this.types == 'image'){
 				this.image = new Image();
 				this.image.src = source;
 				ctx.drawImage(this.image,this.x,this.y,this.width,this.height)
@@ -129,28 +133,62 @@ function work(){
 			}
 			return crash;
 		}
-		this.score = function(text, pos){
+		this.score = function(text, posX,posY){
 			ctx = gameArea.context;
-			ctx.font = '20px lcd';
-			ctx.fillText(text, 10, pos);
+			ctx.font = '15px cursive';
+			ctx.fillText(text, posX, posY);
 			ctx.fillStyle = '#fff';
+			//ctx.globalCompositeOperation = 'source-top';
 		}
 	}
-
 	function updateOthers(){
+		checkLife();
+	}
+
+	function checkLife(){
 		var rand, max, min, randEnemyAttack, rect, randSpeed, paused = false;
+		name();
 		gameArea.frameNo += 1;
-		gameArea.clean();
+		clean();
 		lane();
+		tracks();
+		leftEnemies();
+		rightEnemies();
+		controls();
+		
+		// function playpause(){
+		// 	if(gameArea.keys && gameArea.keys[32]){
+		// 	gameArea.stop();
+		// 	paused = true;
+		// }
+		// 	if(gameArea.keys && gameArea.keys[13] && paused){
+		// 		alert(paused);
+		// 		gameArea.start();
+		// 	}
+		// }
+		// playpause();
+	}
+		
+	function clean(){
+		gameArea.clean();
+	}
+
+	function name(){
+		if(gameArea.frameNo == 0){
+			playerName = prompt("What's your name?","Anonymous");
+		}
+	}
+	function tracks(){
 		if(gameArea.frameNo % 20 == 0){
 		rect = new Component(gameArea.canvas.width/2 - 10,-50,15,50);
 		lanes.push(rect);
-	}
-	for(var i = 0;i < lanes.length; i++){
+		}
+		for(var i = 0;i < lanes.length; i++){
 			lanes[i].createRect();
 			lanes[i].y += 4; 
 		}
-
+	}
+	function leftEnemies(){
 		if(gameArea.frameNo == 1 || gameArea.frameNo % 100 == 0){
 			max = 195;
 			min = 50;
@@ -166,17 +204,34 @@ function work(){
 			//enemies[i].y += 2;
 			enemies[i].getImage();
 			if(driven.crash(enemies[i])){
-		gameArea.stop();
-		alert("GAME OVER!")
+				if(life > 0){
+					life -= 1;
+					driven.x = 200;
+					driven.y = 530;
+					enemies.forEach(function(item, index){
+						item.y = -100;
+					})
+					enemiesOpp.forEach(function(item, index){
+						item.y = -100;
+					})
+					enemies.splice(0);
+					enemiesOpp.splice(0);
+				}
+
+				else if(life == 0){
+					gameArea.stop();
+					alert("GAME OVER!");
+				}
 		}
-		enemies[i].score('Score: ' +(enemies.length * 10 ),30);
-		enemies[i].score('Stage 1', 60);
+		if(enemies[i].y === 530){
+				scores += 5;
+			}
+		// enemies[i].score('Score: ' +(enemies.length * 10 ),10,30);
+		// enemies[i].score('Stage 1',10,60);
 		}
 
-
-  // Enemies on the same track
-
-
+	}
+	function rightEnemies(){
 		if(gameArea.frameNo == 1 || gameArea.frameNo % 150 == 0){
 			var maxOpp = 390,
 				minOpp = 260;
@@ -185,42 +240,50 @@ function work(){
 			rand = Math.floor(Math.random()*7);
 			enemiesOpp.push(new Component(randPosX,-100,60,100,'image',randSpeed,imageArrOpp[rand]));
 			console.log(enemiesOpp,enemiesOpp.length);
-	}
+		}
 		for(var i = 0; i < enemiesOpp.length; i++){
 			enemiesOpp[i].carSpeed();
 			enemiesOpp[i].getImage();
 			if(driven.crash(enemiesOpp[i])){
-		gameArea.stop();
-		alert("GAME OVER!")
+				if(life > 0){
+					life -= 1;
+					driven.x = 200;
+					driven.y = 530;
+					enemies.forEach(function(item, index){
+						item.y = -100;
+					})
+					enemiesOpp.forEach(function(item, index){
+						item.y = -100;
+					})
+					enemies.splice(0);
+					enemiesOpp.splice(0);	
+				}
+
+				else if(life == 0){
+					gameArea.stop();
+					alert("GAME OVER!");
+				}
+		
 		}
-		// enemies[i].score('Score: ' +(enemies.length * 10 ),30);
-		// enemies[i].score('Stage 1', 60);
-		}	
+		if(enemiesOpp[i].y === 530){
+						scoresOpp += 5;
+		}
+		enemiesOpp[i].score('Player Name: '+playerName,320, 30);
+		enemiesOpp[i].score('Life: ' +life,320,60);
+		}
+	}
+	function controls(){
 		driven.speedX = 0;
 		driven.speedY = 0;
 		if(gameArea.keys && gameArea.keys[37]) driven.speedX = -4;
 		if(gameArea.keys && gameArea.keys[39]) driven.speedX = 4;
 		if(gameArea.keys && gameArea.keys[38]) driven.speedY = -4;
 		if(gameArea.keys && gameArea.keys[40]) driven.speedY = 4;
-		// function playpause(){
-		// 	if(gameArea.keys && gameArea.keys[32]){
-		// 	gameArea.stop();
-		// 	paused = true;
-		// }
-		// 	if(gameArea.keys && gameArea.keys[13] && paused){
-		// 		alert(paused);
-		// 		gameArea.start();
-		// 	}
-		// }
-		// playpause();
 		driven.changePos();
 		driven.getImage();
-		//enemy.getImage();
-		// if(enemies.length * 10 == 50){
-		// 	alert('Stage 1 completed');
-		// }
+		driven.score('Score: ' + (scores + scoresOpp),10,30);
+		driven.score('Stage 1',10,60);
 	}
-
 	function everyinterval(n){
 		if((gameArea.frameNo / n ) % 1 == 0){return true;}
 		return false;
