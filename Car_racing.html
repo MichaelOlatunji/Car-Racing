@@ -16,8 +16,21 @@
 		playerName,
 		life = 3,
 		scores = 0,
-		scoresOpp = 0;
-function work(){
+		scoresOpp = 0,
+		totalScores,
+		stages=1,
+		highScores = [],
+		records,
+		checkHighScores,
+		explosion,
+		backgroundSound;
+		function playSound(){
+			backgroundSound = new Audio();
+			backgroundSound.src = 'Sounds/beat.mp3';
+			backgroundSound.play();
+		}
+
+		function work(){
 		driven = new Component(200,520,60,100,'image',0,'images/car.png');
 		//enemy = new Component(200,0,100,100,'image','enemy1.jpg');
 		gameArea.start();
@@ -147,6 +160,8 @@ function work(){
 
 	function checkLife(){
 		var rand, max, min, randEnemyAttack, rect, randSpeed, paused = false;
+		explosion = new Audio();
+		explosion.src = 'Sounds/explosion.mp3';
 		name();
 		gameArea.frameNo += 1;
 		clean();
@@ -205,6 +220,7 @@ function work(){
 			enemies[i].getImage();
 			if(driven.crash(enemies[i])){
 				if(life > 0){
+					explosion.play();
 					life -= 1;
 					driven.x = 200;
 					driven.y = 530;
@@ -219,9 +235,19 @@ function work(){
 				}
 
 				else if(life == 0){
+					explosion.play();
 					gameArea.stop();
 					alert("GAME OVER!");
+					records = {name:playerName,scoresHigh:totalScores}
+					highScores.push(records);
+					localStorage.setItem('HighScore',JSON.stringify(highScores));
+					checkHighScores = JSON.parse(localStorage.getItem('HighScore'));
+					for(var i = 0;i<checkHighScores.length; i++){
+						
+					}
 				}
+				console.log(highScores,localStorage,checkHighScores);
+				backgroundSound.pause();
 		}
 		if(enemies[i].y === 530){
 				scores += 5;
@@ -246,6 +272,7 @@ function work(){
 			enemiesOpp[i].getImage();
 			if(driven.crash(enemiesOpp[i])){
 				if(life > 0){
+					explosion.play();
 					life -= 1;
 					driven.x = 200;
 					driven.y = 530;
@@ -260,16 +287,25 @@ function work(){
 				}
 
 				else if(life == 0){
+					explosion.play()
 					gameArea.stop();
 					alert("GAME OVER!");
+					records = {name:playerName,scoresHigh:totalScores}
+					highScores.push(records);
+				localStorage.setItem('HighScore',JSON.stringify(highScores));
+					checkHighScores = JSON.parse(localStorage.getItem('HighScore'));
+					for(var i = 0;i<checkHighScores.length; i++){
+						
+					}
 				}
-		
+				console.log(highScores,localStorage,checkHighScores);
+				backgroundSound.pause();
 		}
 		if(enemiesOpp[i].y === 530){
 						scoresOpp += 5;
 		}
-		enemiesOpp[i].score('Player Name: '+playerName,320, 30);
-		enemiesOpp[i].score('Life: ' +life,320,60);
+		driven.score('Player Name: '+playerName,320, 30);
+		driven.score('Life: ' +life,320,60);
 		}
 	}
 	function controls(){
@@ -281,8 +317,18 @@ function work(){
 		if(gameArea.keys && gameArea.keys[40]) driven.speedY = 4;
 		driven.changePos();
 		driven.getImage();
-		driven.score('Score: ' + (scores + scoresOpp),10,30);
-		driven.score('Stage 1',10,60);
+		totalScores = scores + scoresOpp;
+		driven.score('Score: ' + totalScores,10,30);
+		if(totalScores >= 250) stages = 2;
+		if(totalScores >= 500) stages =3;
+		if(totalScores >= 1000) stages = 4;
+		if(totalScores >= 2000) stages = 5;
+		if(totalScores >= 5000) stages = 6;
+		if(totalScores >= 10000) stages = 7;
+		if(totalScores >= 20000) stages = 8;
+		if(totalScores >= 50000) stages = 9;
+		if(totalScores >= 100000) stages = 10;
+		driven.score('Stage: '+stages,10,60);
 	}
 	function everyinterval(n){
 		if((gameArea.frameNo / n ) % 1 == 0){return true;}
@@ -296,6 +342,7 @@ function work(){
 		ctx.fillRect(0,0,50,gameArea.canvas.height);
 		ctx.fillRect(450,0,50,gameArea.canvas.height);
 	}
+	//async function;Promise;await;
 </script>
 </body>
 </html>
